@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenAI Interface</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --border-color: #404040;
+            --accent-color: #10a37f;
+            --error-color: #ff6b6b;
+            --input-bg: #333333;
+            --result-bg: #242424;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .container {
+            background-color: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--bg-secondary);
+        }
+
+        textarea, input, select {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-sizing: border-box;
+            background-color: var(--input-bg);
+            color: var(--text-primary);
+        }
+
+        textarea:focus, input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(16, 163, 127, 0.2);
+        }
+
+        button {
+            background-color: var(--accent-color);
+            color: var(--text-primary);
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--result-bg);
+            white-space: pre-wrap;
+            color: var(--text-secondary);
+        }
+
+        .error {
+            color: var(--error-color);
+            margin-top: 5px;
+        }
+
+        .nav-links {
+            margin-bottom: 20px;
+        }
+
+        .nav-links a {
+            color: var(--accent-color);
+            text-decoration: none;
+            margin-right: 20px;
+        }
+
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-links">
+            <a href="/">Hugging Face Models</a>
+            <a href="/openai.html">OpenAI Models</a>
+            <a href="/chat.html">ChatGPT</a>
+        </div>
+
+        <h1>OpenAI Interface</h1>
+
+        <!-- Text Generation Section -->
+        <div class="section">
+            <h2>Text Generation</h2>
+            <div>
+                <label for="generateModel">Model:</label>
+                <select id="generateModel">
+                    <option value="gpt-3.5-turbo-instruct">GPT-3.5 Turbo Instruct</option>
+                    <option value="gpt-4-turbo-instruct">GPT-4 Turbo Instruct (if available)</option>
+                </select>
+            </div>
+            <div>
+                <label for="generatePrompt">Prompt:</label>
+                <textarea id="generatePrompt" rows="4" placeholder="Enter your prompt here..."></textarea>
+            </div>
+            <button onclick="generateText()">Generate Text</button>
+            <div id="generateResult" class="result"></div>
+            <div id="generateError" class="error"></div>
+        </div>
+
+        <!-- Text Completion Section -->
+        <div class="section">
+            <h2>Text Completion</h2>
+            <div>
+                <label for="completionModel">Model:</label>
+                <select id="completionModel">
+                    <option value="gpt-3.5-turbo-instruct">GPT-3.5 Turbo Instruct</option>
+                    <option value="gpt-4-turbo-instruct">GPT-4 Turbo Instruct (if available)</option>
+                </select>
+            </div>
+            <div>
+                <label for="completionText">Text to Complete:</label>
+                <textarea id="completionText" rows="6" placeholder="Enter the text you want to complete..."></textarea>
+            </div>
+            <button onclick="completeText()">Complete Text</button>
+            <div id="completionResult" class="result"></div>
+            <div id="completionError" class="error"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3000/api';
+
+        async function generateText() {
+            const prompt = document.getElementById('generatePrompt').value;
+            const model = document.getElementById('generateModel').value;
+            const resultDiv = document.getElementById('generateResult');
+            const errorDiv = document.getElementById('generateError');
+
+            try {
+                resultDiv.textContent = 'Loading...';
+                errorDiv.textContent = '';
+
+                const response = await fetch(`${API_BASE_URL}/openai/completion`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ prompt, model }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Error generating text');
+                }
+
+                resultDiv.textContent = data.data.choices[0].text;
+            } catch (error) {
+                errorDiv.textContent = error.message;
+                resultDiv.textContent = '';
+            }
+        }
+
+        async function completeText() {
+            const prompt = document.getElementById('completionText').value;
+            const model = document.getElementById('completionModel').value;
+            const resultDiv = document.getElementById('completionResult');
+            const errorDiv = document.getElementById('completionError');
+
+            try {
+                resultDiv.textContent = 'Loading...';
+                errorDiv.textContent = '';
+
+                const response = await fetch(`${API_BASE_URL}/openai/completion`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ prompt, model }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Error completing text');
+                }
+
+                resultDiv.textContent = data.data.choices[0].text;
+            } catch (error) {
+                errorDiv.textContent = error.message;
+                resultDiv.textContent = '';
+            }
+        }
+    </script>
+</body>
+</html> 
